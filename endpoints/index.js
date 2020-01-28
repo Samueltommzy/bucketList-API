@@ -131,6 +131,25 @@ module.exports = (express)=>{
     });
 
     //Update a bucket list
+    bucket_list.put('/bucketlists/:id',user_auth_middleware,(req,res)=>{
+        let bucketId = req.params.id;
+        let update = req.body;
+        update['date_modified'] = new Date();
+        bucketList.findOneAndUpdate({id:bucketId},{$set:update},{new:true,upsert:true}).exec((err,data)=>{
+            if (err) {
+                res.status(500).send({
+                    status:500,
+                    message:"An error ocurred"
+                });
+                return false;
+            }
+            res.status(200).send({
+                status:200,
+                message:'Bucket list updated',
+                data:data
+            });
+        });
+    });
     //Delete a bucket list
 
     //create a new item in a bucket list
@@ -161,7 +180,46 @@ module.exports = (express)=>{
                 });
             });
         });
-
+    });
+    //list all items in a bucket lists
+    bucket_list.get('/bucketlists/:id/items',user_auth_middleware,(req,res)=>{
+        let bucketId = req.params.id;
+        bucketList.findOne({id:bucketId}).exec((err,data)=>{
+            if (err) {
+                res.status(500).send({
+                    status:500,
+                    message: "An error ocurred"
+                });
+                return false;
+            }
+            res.status(200).send({
+                status:200,
+                message:"All items in bucket list loaded",
+                data:data['items']
+            });
+        })
+    })
+    
+    //Get a single item in a bucket list
+    bucket_list.get('/bucketlists/:bid/items/:id',user_auth_middleware,(req,res)=>{
+        let bucketId = req.params.bid;
+        let itemId   = req.params.id;
+        bucketList.findOne({id:bucketId}).exec((err,data)=>{
+            if (err) {
+                res.status(500).send({
+                    status:500,
+                    message: "An error ocurred"
+                });
+                return false;
+            }
+            
+            let item = data.items.filter((x)=>x.id==itemId)[0];
+            res.status(200).send({
+                status:200,
+                message:"Loaded item successsfully",
+                data:item
+            });
+        })
     })
 
     return bucket_list;
