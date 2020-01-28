@@ -18,9 +18,9 @@ app.listen(port,(err)=>{
     if(err) {
         return err;
     }
-    else {
-        console.log("App listening on port" + port);
-    }
+    // else {
+    //     console.log("App listening on port" + port);
+    // }
 });
 
 app.use(cors());
@@ -33,9 +33,9 @@ mongoose.connect(config.dbUrl,
     if (err) {
         return err;
     }
-    else {
-       console.log(`Successfully connected to ${config.dbName}`)
-    }
+    // else {
+    //    console.log(`Successfully connected to ${config.dbName}`)
+    // }
 });
 
 
