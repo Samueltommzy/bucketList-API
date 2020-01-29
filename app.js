@@ -26,7 +26,7 @@ app.listen(port,(err)=>{
 app.use(cors());
 app.use(parser.json());
 app.use(parser.urlencoded({extended: false}));
-app.use('/',endpoints);
+app.use('/api/v1',endpoints);
 mongoose.connect(config.dbUrl,
 {useUnifiedTopology:true,useNewUrlParser:true},
 (err)=>{
