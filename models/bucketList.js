@@ -21,7 +21,12 @@ let bucketListSchema = new Schema({
     created_by:{type:Number,ref: 'User'}
 });
 
-bucketListSchema.plugin(autoIncrement.plugin,{model:'itemSchema',field:'id',startAt:1,incrementBy:1});
-itemSchema.plugin(autoIncrement.plugin,{model:'BucketList',field:'id',startAt:1,incrementBy:1});
+bucketListSchema.plugin(autoIncrement.plugin,{model:'itemSchema',field:'_id',startAt:1,incrementBy:1});
+itemSchema.plugin(autoIncrement.plugin,{model:'BucketList',field:'_id',startAt:1,incrementBy:1});
 
-module.exports = mongoose.model('BucketList',bucketListSchema);
+let bucketModel = mongoose.model('BucketList',bucketListSchema);
+let itemModel = mongoose.model('itemSchema',itemSchema);
+module.exports = {
+    bucketModel: bucketModel,
+    itemModel: itemModel
+};
