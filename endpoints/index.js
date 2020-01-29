@@ -1,7 +1,9 @@
 "use strict"
 let userModel =  require('../models/users');
-let bucketList =  require('../models/bucketList');
+let {bucketModel} =  require('../models/bucketList');
 let {token_middleware,user_auth_middleware} = require('../middleware/middleware');
+let {del} = require('../controllers/controllers')
+
 module.exports = (express)=>{
     let bucket_list = express.Router();
 
@@ -35,7 +37,8 @@ module.exports = (express)=>{
             }
         });
     });
-
+    
+    //User login endpoint
     bucket_list.post('/auth/login',(req,res)=>{
         let { email,password} = req.body;
        userModel.findOne({email:email}).exec((err,data)=>{
@@ -71,17 +74,18 @@ module.exports = (express)=>{
            });
        });
     });
+
     //create a new bucketlist
     bucket_list.post('/bucketlists',user_auth_middleware,(req,res)=>{
-        let created_by = req.user.id;
+        let created_by = req.user._id;
         let name = req.body.name;
-        let bucketObj = {created_by,name}
-        let newBuck = bucketList(bucketObj);
+        let bucketObj = {created_by,name};
+        let newBuck = bucketModel(bucketObj);
         newBuck.save((err,data)=>{
             if(err){
                 res.status(500).send({
                     status:500,
-                    message:"An error ocurred"
+                    message:"An error ocurred here"
                 });
             return false;
             }
@@ -92,9 +96,19 @@ module.exports = (express)=>{
             });
         });
     });
-    //List all bucketLists created
+
+    //List all bucketLists created by a user (paginated response)
     bucket_list.get('/bucketlists',user_auth_middleware,(req,res)=>{
-        bucketList.find().exec((err,data)=>{
+        let page  = parseInt(req.query.page) ||1;
+        let limit = (parseInt(req.query.limit) > 100?100:parseInt(req.query.limit)) ||20;
+        let search= req.query.q;
+        let userId = req.user._id;
+        let query = {};
+        query.skip = limit * (page-1);
+        query.limit = limit;
+        let filterCriteria = {userId};
+        if (search) filterCriteria = {...filterCriteria,name:search}
+       bucketModel.find(filterCriteria,query).exec((err,data)=>{
             if (err) {
                 res.status(500).send({
                     status:500,
@@ -114,7 +128,8 @@ module.exports = (express)=>{
     //Get a single bucket list
     bucket_list.get('/bucketlists/:id',user_auth_middleware,(req,res)=>{
         let bucketId = req.params.id;
-        bucketList.findOne({id:bucketId}).exec((err,data)=>{
+        let userId = req.user._id;
+       bucketModel.findOne({created_by:userId,_id:bucketId}).exec((err,data)=>{
             if(err){
                 res.status(500).send({
                     status:500,
@@ -134,8 +149,9 @@ module.exports = (express)=>{
     bucket_list.put('/bucketlists/:id',user_auth_middleware,(req,res)=>{
         let bucketId = req.params.id;
         let update = req.body;
+        let userId = req.user._id;
         update['date_modified'] = new Date();
-        bucketList.findOneAndUpdate({id:bucketId},{$set:update},{new:true,upsert:true}).exec((err,data)=>{
+        bucketModel.findOneAndUpdate({created_by:userId,_id:bucketId},{$set:update},{new:true,upsert:true}).exec((err,data)=>{
             if (err) {
                 res.status(500).send({
                     status:500,
@@ -150,13 +166,32 @@ module.exports = (express)=>{
             });
         });
     });
+
     //Delete a bucket list
+    bucket_list.delete('/bucketlists/:id',user_auth_middleware,(req,res)=>{
+        let bucketId = req.params.id;
+        let userId = req.user._id;
+        bucketModel.remove({created_by:userId,_id:bucketId}).exec((err,data)=>{
+            if (err) {
+                res.status(500).send({
+                    status:500,
+                    message:"An error ocurred"
+                });
+                return false;
+            }
+            res.status(200).send({
+                status:200,
+                message: `Bucket list ${bucketId} deleted`
+            });
+        });
+    });
 
     //create a new item in a bucket list
     bucket_list.post('/bucketlists/:id/items',user_auth_middleware,(req,res)=>{
         let item = req.body;
         let bucketId = req.params.id;
-        bucketList.findOne({id:bucketId}).exec((err,data)=>{
+        let userId = req.user._id;
+        bucketModel.findOne({created_by:userId,_id:bucketId}).exec((err,data)=>{
             if(err){
                 res.status(500).send({
                     status:500,
@@ -181,10 +216,12 @@ module.exports = (express)=>{
             });
         });
     });
-    //list all items in a bucket lists
+
+    //list all items in a bucket list
     bucket_list.get('/bucketlists/:id/items',user_auth_middleware,(req,res)=>{
         let bucketId = req.params.id;
-        bucketList.findOne({id:bucketId}).exec((err,data)=>{
+        let userId = req.user._id
+        bucketModel.findOne({created_by:userId,_id:bucketId}).exec((err,data)=>{
             if (err) {
                 res.status(500).send({
                     status:500,
@@ -204,7 +241,8 @@ module.exports = (express)=>{
     bucket_list.get('/bucketlists/:bid/items/:id',user_auth_middleware,(req,res)=>{
         let bucketId = req.params.bid;
         let itemId   = req.params.id;
-        bucketList.findOne({id:bucketId}).exec((err,data)=>{
+        let userId = req.user._id
+        bucketModel.findOne({created_by:userId,_id:bucketId}).exec((err,data)=>{
             if (err) {
                 res.status(500).send({
                     status:500,
@@ -213,14 +251,74 @@ module.exports = (express)=>{
                 return false;
             }
             
-            let item = data.items.filter((x)=>x.id==itemId)[0];
+            let item = data.items.id(itemId);
             res.status(200).send({
                 status:200,
                 message:"Loaded item successsfully",
                 data:item
             });
-        })
-    })
+        });
+    });
+
+    //Update a single item in a bucket list
+    bucket_list.put('/bucketlists/:bid/items/:id', user_auth_middleware,(req,res)=>{
+        let bucketId = req.params.bid;
+        let itemId = req.params.id;
+        let userId = req.user._id
+        let updateObj = req.body;
+        updateObj['date_modified'] =new Date();
+        bucketModel.findOne({created_by:userId,_id:bucketId}).exec((err,data)=>{
+            if (err){
+                res.status(500).send({
+                    status:500,
+                    message: "An error ocurred",
+                    error: err
+                });
+                return false;
+            }
+            let item = data.items.id(itemId);
+            item.set(updateObj);
+            data.markModified();
+            data.save((err,data)=>{
+                if (err) {
+                    res.status(500).send({
+                        status:500,
+                        message: "An error ocurred",
+                        error:err
+                    });
+                    return false;
+                }
+                res.status(200).send({
+                    status:200,
+                    message:`Item ${itemId} updated`,
+                    data: data
+                });
+            });
+        });
+    });
+
+    //delete a single item in a bucket list
+    bucket_list.delete('/bucketlists/:bid/items/:id',user_auth_middleware,(req,res)=>{
+        let bucketId = req.params.bid;
+        let itemId   = req.params.id;
+        let userId = req.user._id
+        bucketModel.update(
+            {"_id":bucketId,"created_by":userId},
+            {"$pull": {"items":{"_id":itemId}}}
+        ).exec((err,data)=>{
+            if (err) {
+                res.status(500).send({
+                    status:500,
+                    message: "An error ocurred"
+                });
+                return false;
+            }
+            res.status(200).send({
+                status: 200,
+                message: `item ${itemId} has been removed`,
+            });
+        });
+    });
 
     return bucket_list;
 }
