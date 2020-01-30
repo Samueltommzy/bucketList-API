@@ -4,9 +4,12 @@ let mongoose = require('mongoose');
 let bcrypt   = require('bcrypt-node');
 let Schema   = mongoose.Schema;
 let autoIncrement = require('mongoose-auto-increment');
+let config   = require('../config/config');
+
+autoIncrement.initialize(mongoose.createConnection(config.prodDb));
 
 
-autoIncrement.initialize(mongoose.createConnection('mongodb://127.0.0.1:27017/BucketList'))
+
 
 let userSchema = new Schema({
     email: {type: String,required: true,unique:true},
