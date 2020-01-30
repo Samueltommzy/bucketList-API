@@ -7,7 +7,7 @@ let {del} = require('../controllers/controllers')
 module.exports = (express)=>{
     let bucket_list = express.Router();
 
-    bucket_list.post('auth/createuser',(req,res)=>{
+    bucket_list.post('/auth/createuser',(req,res)=>{
         let {email,password} =req.body;
         let userObj = {email,password};
         let newUser = userModel(userObj);
@@ -106,13 +106,16 @@ module.exports = (express)=>{
         let query = {};
         query.skip = limit * (page-1);
         query.limit = limit;
-        let filterCriteria = {userId};
-        if (search) filterCriteria = {...filterCriteria,name:search}
-       bucketModel.find(filterCriteria,query).exec((err,data)=>{
+        let filterCriteria = {created_by:userId};
+        if (search) filterCriteria = {...filterCriteria,name:search};
+        console.log("query",query);
+        console.log("filter",filterCriteria);
+       bucketModel.find(filterCriteria,{},query).exec((err,data)=>{
             if (err) {
                 res.status(500).send({
                     status:500,
-                    message: "An error ocurred"
+                    message: "An error ocurred",
+                    error:err
                 });
                 return false;
             }
@@ -301,7 +304,7 @@ module.exports = (express)=>{
     bucket_list.delete('/bucketlists/:bid/items/:id',user_auth_middleware,(req,res)=>{
         let bucketId = req.params.bid;
         let itemId   = req.params.id;
-        let userId = req.user._id
+        let userId = req.user._id;
         bucketModel.update(
             {"_id":bucketId,"created_by":userId},
             {"$pull": {"items":{"_id":itemId}}}
@@ -315,7 +318,7 @@ module.exports = (express)=>{
             }
             res.status(200).send({
                 status: 200,
-                message: `item ${itemId} has been removed`,
+                message: `item ${itemId} has been removed`
             });
         });
     });
