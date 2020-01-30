@@ -25,7 +25,7 @@ module.exports = (express)=>{
                 res.status(500).send({
                     status:500,
                     message:"Could not create user"
-                })
+                });
             }
             else{
                 data['password'] = undefined;
