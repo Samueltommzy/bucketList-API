@@ -108,8 +108,6 @@ module.exports = (express)=>{
         query.limit = limit;
         let filterCriteria = {created_by:userId};
         if (search) filterCriteria = {...filterCriteria,name:search};
-        console.log("query",query);
-        console.log("filter",filterCriteria);
        bucketModel.find(filterCriteria,{},query).exec((err,data)=>{
             if (err) {
                 res.status(500).send({
