@@ -30,6 +30,9 @@ mongoose.connect(config.prodDb,
     if (err) {
         return err;
     }
+    else {
+        console.log("connected")
+    }
 });
 
 
