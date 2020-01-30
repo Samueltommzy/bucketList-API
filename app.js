@@ -9,7 +9,6 @@ let config         =   require("./config/config");
 let port           =   process.env.PORT || 3000;
 let app            =   express();
 let endpoints      =   require("./endpoints/index")(express);
-let autoIncrement  =   require('mongoose-auto-increment');
 
 
 mongoose.Promise = global.Promise;
@@ -18,24 +17,19 @@ app.listen(port,(err)=>{
     if(err) {
         return err;
     }
-    // else {
-    //     console.log("App listening on port" + port);
-    // }
+    
 });
 
 app.use(cors());
 app.use(parser.json());
 app.use(parser.urlencoded({extended: false}));
 app.use('/api/v1',endpoints);
-mongoose.connect(config.dbUrl,
+mongoose.connect(config.prodDb,
 {useUnifiedTopology:true,useNewUrlParser:true},
 (err)=>{
     if (err) {
         return err;
     }
-    // else {
-    //    console.log(`Successfully connected to ${config.dbName}`)
-    // }
 });
 
 
