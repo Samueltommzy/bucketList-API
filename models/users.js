@@ -32,5 +32,5 @@ userSchema.methods.passwordCheck = function(password, callback) {
     });
 };
 
-userSchema.plugin(autoIncrement.plugin,{model:'userSchema',startAt:1,incrementBy:1});
+userSchema.plugin(autoIncrement.plugin,{model:'userSchema',field:'_id',startAt:101,incrementBy:1});
 module.exports = mongoose.model('User',userSchema);
