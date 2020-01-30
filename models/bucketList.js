@@ -3,8 +3,9 @@
 let mongoose = require('mongoose');
 let Schema   = mongoose.Schema;
 let autoIncrement = require('mongoose-auto-increment');
+let config   = require('../config/config');
 
-autoIncrement.initialize(mongoose.createConnection('mongodb://127.0.0.1:27017/BucketList'))
+autoIncrement.initialize(mongoose.createConnection(config.prodDb));
 
 let itemSchema = new Schema({
     name:{type: String,required:true},
