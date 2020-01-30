@@ -2,7 +2,7 @@
 let userModel =  require('../models/users');
 let {bucketModel} =  require('../models/bucketList');
 let {token_middleware,user_auth_middleware} = require('../middleware/middleware');
-let {del} = require('../controllers/controllers')
+
 
 module.exports = (express)=>{
     let bucket_list = express.Router();
