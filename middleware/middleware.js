@@ -48,8 +48,8 @@ const user_auth_middleware  =  (req,res,next)=>{
             }
 
             if(!payload) {
-                    res.status(204).send({
-                    status:  204,
+                    res.status(401).send({
+                    status:  401,
                     message: "user not found"
                 });
                 return false;
